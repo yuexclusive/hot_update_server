@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>browser-amd-editor</title>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+</head>
+
+<body>
+    <h2>Fucking Scripts</h2>
+    <select id="select_files" onchange="select_files_change(this)">
+    </select>
+    <input type="button" id="btn_save" value="Save" onclick="save()" />
+    <input type="button" id="btn_run" value="Run" onclick="run()" />
+    <p></p>
+    <table>
+        <tr>
+            <td>
+                <div id="container" style="width: 500px; height: 600px; border: 1px solid grey"></div>
+            </td>
+            <td>
+                <div><textarea id="textarea"
+                        style="width: 1000px; height: 598px; border: 1px solid grey">adadfasfdadfaf</textarea>
+                </div>
+            </td>
+        </tr>
+    </table>
+
+
+    <!-- OR ANY OTHER AMD LOADER HERE INSTEAD OF loader.js -->
+    <script src="vs/loader.js"></script>
+    <script>
+        var editor
+        var map_data = new Map()
+        map_data.set("hello_world", 'print "Hello world!"')
+
+        function re_style(params) {
+            if (editor.getValue() != map_data.get(document.getElementById("select_files").value)) {
+                document.getElementById("btn_save").setAttribute("style", "background-color: red;")
+            } else {
+                document.getElementById("btn_save").removeAttribute("style")
+            }
+        }
+
+        function select_files_change(obj) {
+            if (editor) {
+                editor.dispose();
+            }
+            require.config({ paths: { vs: 'vs' } });
+            require(['vs/editor/editor.main'], function () {
+                editor = monaco.editor.create(document.getElementById('container'), {
+                    value: (obj) ? map_data.get(obj.value) : 'print "Hello world!"',
+                    language: 'shell'
+                });
+
+                editor.onDidChangeModelContent(function (event) {
+                    re_style()
+                });
+            });
+        }
+
+        function show(value) {
+            document.getElementById("textarea").value = value
+        }
+
+        function save() {
+            let file_name = document.getElementById("select_files").value
+            let content = editor.getValue()
+            map_data.set(file_name, content)
+
+            fetch('save', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    file_name: file_name,
+                    content: content
+                })
+            })
+                .then(response => {
+                    return response.json()
+                })
+                .then(data => { show(JSON.stringify(data)) })
+                .catch(error => {
+                    console.log(error)
+                });
+
+            re_style()
+        }
+
+        function run() {
+            let content = editor.getValue()
+            fetch('run', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    content: content
+                })
+            })
+                .then(response => {
+                    return response.json()
+                })
+                .then(data => { show(data.data) })
+                .catch(error => {
+                    console.log(error)
+                });
+        }
+
+
+        window.onload = () => {
+            fetch('scripts')
+                .then(response => response.json())
+                .then(data => {
+
+                    for (const item of data.data) {
+                        map_data.set(item.file_name, item.content)
+                    }
+
+                    document.getElementById("select_files").map_data = map_data
+
+                    for (const key of map_data.keys()) {
+                        document.getElementById("select_files").innerHTML += `<option value="${key}">${key}</option>`
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+
+            select_files_change()
+        }
+    </script>
+</body>
+
+</html>

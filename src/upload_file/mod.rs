@@ -1,5 +1,3 @@
-#![cfg(feature = "upload_file")]
-
 use std::io::Write;
 
 use actix_multipart::Multipart;

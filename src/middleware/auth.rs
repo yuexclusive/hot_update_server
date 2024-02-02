@@ -1,10 +1,7 @@
 use std::future::{ready, Ready};
 
-use crate::service::user as user_service;
-
 use actix_web::{
     dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform},
-    http::header::{HeaderName, HeaderValue},
     Error,
 };
 use futures_util::future::LocalBoxFuture;
@@ -52,28 +49,33 @@ where
 
     forward_ready!(service);
 
-    fn call(&self, mut req: ServiceRequest) -> Self::Future {
+    fn call(&self, req: ServiceRequest) -> Self::Future {
         let authentication = req.headers().get("token");
         match authentication {
             Some(v) => match v.to_str() {
-                Ok(v) => {
-                    let token = v.to_string();
-                    match user_service::check(&token) {
-                        Ok(email) => {
-                            req.headers_mut().insert(
-                                HeaderName::from_static("email"),
-                                HeaderValue::from_str(&email).unwrap(),
-                            );
+                Ok(_v) => {
+                    // let token = v.to_string();
+                    let fut = self.service.call(req);
+                    Box::pin(async move {
+                        let res = fut.await?;
+                        Ok(res)
+                    })
+                    // match user_service::check(&token) {
+                    //     Ok(email) => {
+                    //         req.headers_mut().insert(
+                    //             HeaderName::from_static("email"),
+                    //             HeaderValue::from_str(&email).unwrap(),
+                    //         );
 
-                            let fut = self.service.call(req);
+                    //         let fut = self.service.call(req);
 
-                            Box::pin(async move {
-                                let res = fut.await?;
-                                Ok(res)
-                            })
-                        }
-                        Err(err) => Box::pin(async move { Err(err.into()) }),
-                    }
+                    //         Box::pin(async move {
+                    //             let res = fut.await?;
+                    //             Ok(res)
+                    //         })
+                    //     }
+                    //     Err(err) => Box::pin(async move { Err(err.into()) }),
+                    // }
                 }
                 Err(err) => Box::pin(async move { Err(unauthorized!(err).into()) }),
             },

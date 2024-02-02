@@ -1,7 +1,6 @@
-#![cfg(feature = "openapi")]
-pub mod role;
+pub mod sync;
 pub mod security;
-pub mod user;
+pub mod auth;
 
 use utoipa::OpenApi;
 use utoipa_swagger_ui::{SwaggerUi, Url};
@@ -20,12 +19,12 @@ pub fn swaggerui() -> SwaggerUi {
     // ))
     let urls = vec![
         (
-            Url::new("user", "/api-doc/user.json"),
-            crate::openapi::user::ApiDoc::openapi().clone(),
+            Url::new("auth", "/api-doc/auth.json"),
+            crate::openapi::auth::ApiDoc::openapi().clone(),
         ),
         (
-            Url::new("role", "/api-doc/role.json"),
-            crate::openapi::role::ApiDoc::openapi().clone(),
+            Url::new("sync", "/api-doc/sync.json"),
+            crate::openapi::sync::ApiDoc::openapi().clone(),
         ),
     ];
     SwaggerUi::new("/swagger/{_:.*}").urls(urls)

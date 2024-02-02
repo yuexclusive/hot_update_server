@@ -5,20 +5,6 @@ use std::fs;
 static mut CONFIG: OnceCell<Config> = OnceCell::new();
 
 #[derive(Deserialize, Serialize)]
-pub struct Redis {
-    pub host: String,
-    pub port: u16,
-    pub username: Option<String>,
-    pub password: Option<String>,
-}
-
-#[derive(Deserialize, Serialize)]
-pub struct MeiliSearch {
-    pub address: String,
-    pub api_key: String,
-}
-
-#[derive(Deserialize, Serialize)]
 pub struct Email {
     pub username: String,
     pub password: String,
@@ -31,8 +17,6 @@ pub struct Config {
     pub name: String,
     pub host: String,
     pub port: u16,
-    pub redis: Redis,
-    pub meilisearch: MeiliSearch,
     pub email: Email,
 }
 
